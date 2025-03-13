@@ -75,9 +75,11 @@ function startAutoplay(block, interval = 6000) {
   if (slides.length < 2) return;
   let currentIndex = parseInt(block.dataset.activeSlide || '0', 10);
   setInterval(() => {
-    const nextIndex = (currentIndex + 1) % slides.length;
-    showSlide(block, nextIndex);
-    currentIndex = nextIndex;
+    if (carouselAutoScroll) {
+      const nextIndex = (currentIndex + 1) % slides.length;
+      showSlide(block, nextIndex);
+      currentIndex = nextIndex;
+    }
   }, interval);
 }
 
@@ -110,7 +112,22 @@ function shuffleArray(array) {
   }
 }
 
+function handleSelection(event) {
+  const { detail } = event;
+  const resource = detail?.resource;
+  if (resource) {
+    const element = document.querySelector(`[data-aue-resource="${resource}"]`);
+    const block = element.parentElement?.closest('.block[data-aue-resource]') || element?.closest('.block[data-aue-resource]');
+    const index = element.getAttribute("data-slide-index");
+    if (index) {
+      carouselAutoScroll = false;
+      showSlide(block, index);
+    }
+   }
+}
+
 let carouselId = 0;
+let carouselAutoScroll = true
 export default async function decorate(block) {
   carouselId += 1;
   block.setAttribute('id', `carousel-${carouselId}`);
@@ -169,4 +186,6 @@ export default async function decorate(block) {
     bindEvents(block);
     startAutoplay(block);
   }
+
+  block.addEventListener('aue:ui-select', handleSelection);
 }
